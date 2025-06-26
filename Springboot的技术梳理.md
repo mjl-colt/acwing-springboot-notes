@@ -572,7 +572,7 @@ Spring Security 是一个框架，用来做：
 
 但是 Spring Security 并不规定你用哪种方式认证 —— 你可以用表单登录、OAuth、LDAP、JWT……都可以。
 
-![4](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\4.png)
+![4](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\4.png)
 
 ```java
 // 从安全上下文中获取“当前登录的用户信息” 
@@ -593,9 +593,9 @@ User user = loginUser.getUser();
 
 下面这个是登录阶段的做法：
 
-![5](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\5.png)
+![5](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\5.png)
 
-![6](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\6.png)
+![6](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\6.png)
 
 # 6.service，serviceimp,controller怎么互相调用
 

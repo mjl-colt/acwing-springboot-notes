@@ -230,7 +230,7 @@ export default{
 
 这是一个对于所有游戏或者说页面需要写的代码。在scripts的AcGameObject.js中，一秒60帧率，每帧刷新一次。这个是由requestAnimationFrame(step)实现的。当我们开始调用`requestAnimationFrame(step)`，会在下一帧执行`step`，在下一帧执行`step`时，执行完到最后再次触发`requestAnimationFrame(step)`，会在下下帧执行`step`。
 
-![1](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\1.png)
+![1](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\1.png)
 
 #### **整体流程总结**
 
@@ -474,7 +474,7 @@ initializeGameMap(ctx);// 初始化画布
 
 7.讨论这里rows（行数）和cols（列数），与（canvas）的x和y的关系
 
-![2](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\2.png)
+![2](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\2.png)
 
 所以此时在Cell.js文件中，有 this.x = c + 0.5; // 中心点的 x 坐标（列号 + 0.5）和 this.y = r + 0.5;// 中心点的 y 坐标（行号 + 0.5），x对应的是c列数，y对应的是r行数。
 
@@ -505,7 +505,7 @@ createApp(App)
 
 再解释一下，export default createStore({...})，它的作用是导出一个 Vuex store 实例，就是**“把一个用 `createStore()` 创建出来的 Vuex 状态仓库对象导出去”**，让别的文件可以用这个仓库来管理全局数据。export default {...}的作用是**把一个对象“丢出去”，让别的文件可以用它。**对应代码中，即
 
-![3](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\3.png)
+![3](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\3.png)
 
 index.js中用export default createStore({...})，然后把pk.js，record.js，user.js全都用export default {...}导入到index.js的module模块中。类似于下面这种。
 
@@ -594,7 +594,7 @@ setUsername(state, name) {
   }
 ```
 
-![7](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\7.png)
+![7](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\7.png)
 
 ### ✅ 3. `actions`
 
@@ -651,7 +651,7 @@ Vue 组件从创建 ➡️ 渲染 ➡️ 更新 ➡️ 销毁，会经历一系�
 
 首先看一下基础变换，包括有参和无参的。
 
-![8](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\8.png)
+![8](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\8.png)
 
  **JavaScript 把“函数”当成一种值** —— 就像数字、字符串、对象一样，**函数也是“一等公民”**，所以你可以：
 
@@ -713,7 +713,7 @@ greetJerry(); // Hello, Jerry!
 
 10.vue框架顺序的一个梳理
 
-![9](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\9.png)
+![9](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\9.png)
 
 1. **编译阶段（构建时）**
    - Vue Loader 会把 `<template>`、`<script>`、`<style>` 分开编译
@@ -757,7 +757,7 @@ Spring Boot会在**项目启动时扫描所有带有注解（如 @PostMapping）
 
 如果代码里没有ajax，比如store.dispatch("login")，同理还有getinfo和logout这两个，都存在vuex中的store中的user.js中的actions中的函数中，写了ajax,如下。
 
-![10](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\10.png)
+![10](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\10.png)
 
 ### 🟢 第二阶段：匹配成功，进入游戏后，前后端使用 **WebSocket 实时通信**
 
@@ -777,7 +777,7 @@ Spring Boot会在**项目启动时扫描所有带有注解（如 @PostMapping）
 **`GameMap.vue` 是 UI 组件，负责页面结构和渲染**，
 **`GameMap.js` 是逻辑类，封装地图的运行逻辑、控制地图、蛇、游戏规则等**。
 
-![11](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\11.png)
+![11](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\11.png)
 
 14.user.js和pk.js的区别
 
@@ -788,4 +788,4 @@ Spring Boot会在**项目启动时扫描所有带有注解（如 @PostMapping）
 
 这就是为什么能进行对比，你要判断一下：当前我是不是 A 玩家？（显示“左下角”）——所以需要比一下当前用户 ID 和对局玩家 ID。就可以显示是左下角用户还是右上角用户。
 
-![12](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\12.png)
+![12](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\12.png)
