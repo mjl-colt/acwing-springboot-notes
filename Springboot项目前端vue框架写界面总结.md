@@ -1,6 +1,8 @@
 # Springboot项目前端vue框架写界面总结
 
-1.实现关于路由，在App这个vue里面template导入**`<router-view />` ， `<router-view />` **是 Vue Router 提供的占位符组件，通俗理解为它是管理链接，可以跳转链接。比如说从http://localhost:8080/pk/跳转到http://localhost:8080/record/。它实际上是占据这个位置，等链接到对应网址的对应网页。就会显示对应网页的内容。
+# 1.实现关于路由
+
+在App这个vue里面template导入**`<router-view />` ， `<router-view />` **是 Vue Router 提供的占位符组件，通俗理解为它是管理链接，可以跳转链接。比如说从http://localhost:8080/pk/跳转到http://localhost:8080/record/。它实际上是占据这个位置，等链接到对应网址的对应网页。就会显示对应网页的内容。
 
 - 它会动态地渲染与当前路径（URL）匹配的组件。
 - 例如，当路径为 `/pk/` 时，`router-view` 会加载 `PkIndexView` 组件。
@@ -128,9 +130,7 @@ import store from './store'
 createApp(App).use(store).use(router).use(router).mount('#app')
 ```
 
-
-
-2.实现关于点击标题会跳转链接
+# 2.实现关于点击标题会跳转链接
 
 初始简陋版本是如下：(他的缺点在于：浏览器会刷新并显示新页面)
 
@@ -182,7 +182,7 @@ const routes = [
 <router-link :to="{name: 'pk_index', query: {page: 2, size: 10}}">对战</router-link>
 ```
 
-3.实现点击谁，谁就亮的操作，解析下面代码。结合来看。
+# 3.实现点击谁，谁就亮的操作，解析下面代码。结合来看。
 
 ```javascript
 <script >
@@ -226,7 +226,7 @@ export default{
 
 这里:class=其实是v-bind:class=的缩写。只有加上它们才能实现动态绑定 HTML 属性的值，值可以是变量、计算属性或 JavaScript 表达式。如果不加：那么它就是静态的无法改变。只有加了才是动态可以改变，这样就可以和上述说的route_name联系起来，当 `route_name` 的值变化时，`class` 会随之更新。
 
-4.实现对于动态刷新
+# 4.实现对于动态刷新
 
 这是一个对于所有游戏或者说页面需要写的代码。在scripts的AcGameObject.js中，一秒60帧率，每帧刷新一次。这个是由requestAnimationFrame(step)实现的。当我们开始调用`requestAnimationFrame(step)`，会在下一帧执行`step`，在下一帧执行`step`时，执行完到最后再次触发`requestAnimationFrame(step)`，会在下下帧执行`step`。
 
@@ -247,7 +247,7 @@ export default{
      - 执行销毁前的逻辑（`on_destroy`）。
      - 从 `AC_GAME_OBJECTS` 数组中移除对象。
 
-对于这个代码，有两个细节需要重申一下。第一个细节：
+### 对于这个代码，有几个细节需要重申一下。第一个细节：
 
 ```javascript
 class AcGameObject {
@@ -277,7 +277,77 @@ const player = new Player();
 
 因此：`this.timedelta` 和 `this.has_called_start` 是 `Player` 实例的属性。`AcGame_Object.push(this)` 会将 `player` 添加到全局数组中。
 
-第二个细节，函数部分的总体梳理。梳理：函数表达式（即箭头函数），函数声明，普通函数这三个东西。
+### 第二个细节，总体流程的一个梳理
+
+```javascript
+// game_object.js
+
+export const GAME_OBJECTS = [];
+
+export class GameObject {
+  constructor(name, speed) {
+    this.name = name;
+    this.x = 0;
+    this.speed = speed; // px/s
+    this.timedelta = 0;
+    this.has_called_start = false;
+    GAME_OBJECTS.push(this);
+  }
+  start() {
+  }
+  update() {
+  }
+  on_destroy() {
+  }
+  destroy() {
+  }
+}
+
+let last_timestamp;
+
+function step(timestamp) {
+  for (let obj of GAME_OBJECTS) {
+    if (!obj.has_called_start) {
+      obj.has_called_start = true;
+      obj.start();
+    } else {
+      // timedelta 反映的是每帧的真实时间差。因为每帧的时间间隔不一定是相同的，所以要计算一下
+      obj.timedelta = timestamp - last_timestamp;
+      obj.update();
+    }
+  }
+
+  last_timestamp = timestamp;
+  requestAnimationFrame(step);
+}
+
+export function start_game_loop() {
+  requestAnimationFrame(step);
+}
+
+
+
+// main.js中进行调用
+
+import { GameObject, start_game_loop } from './game_object.js';
+
+// 创建两个物体
+const obj1 = new GameObject("飞机", 100); // 100 px/s
+const obj2 = new GameObject("子弹", 300); // 300 px/s
+
+// 启动渲染循环
+start_game_loop();
+
+
+//如果你不封装成 start_game_loop() 函数，而是直接在模块中写：requestAnimationFrame(step);
+//模块一被 import，requestAnimationFrame(step) 就立即运行一次，即import { GameObject } from './game_object.js'就会运行一次
+//直接写 requestAnimationFrame(step) 会让循环在 模块被 import 时立刻启动，
+//封装成 start_game_loop() 函数是为了让你控制启动时机，推荐用于正式项目。
+```
+
+
+
+### 第三个细节，函数部分的总体梳理。梳理：函数表达式（即箭头函数），函数声明，普通函数这三个东西。
 
 先看下面这个箭头函数和普通函数。它们中的this的针对的对象不一样。通常使用箭头函数即为继承所属的类，使用的更常见一点。
 
@@ -342,7 +412,7 @@ function step(timestamp) {
 }
 ```
 
-5.现在讨论一下script里面的知识点。
+# 5.现在讨论一下script里面的知识点。
 
 export default里面写components:{}和steup(){}的用处不相同。components: {}用法即先用import把其他的vue文件导入进来，然后在components: {}进行注册导出，才能在这个vue模块的template中使用。官方表达即为：注册后，子组件才能在当前组件中使用。**`components: {}`** 是告诉 Vue：**“我这个组件需要用到哪些子组件”**。
 
@@ -433,9 +503,7 @@ $.ajax({
 
  你可以用它来向服务器发送请求（GET / POST等），并获取返回的数据。
 
-
-
-6.讨论一下canvas的一些基础使用
+# 6.讨论一下canvas的一些基础使用
 
 在传统的 JavaScript 中，我们确实需要通过`document.getElementById("canvas")` 获取画布元素，再通过 `getContext("2d")` 获取 2D 绘图上下文。这两步结合起来可以理解为获得一个画布和画笔。
 
@@ -448,7 +516,7 @@ initializeGameMap(ctx);// 初始化画布
 
 在vue方式中，`ref` 绑定了模板中的 `<canvas>` 元素。`canvas.value` 在组件挂载后会自动指向对应的 DOM 元素（即在template中的`<canvas>` 标签）。`canvas.value.getContext('2d')`：直接在绑定的 `canvas` 元素上调用 `getContext('2d')` 获取 2D 绘图上下文（画笔）。
 
-```javascript
+```vue
 //Vue 的方式
 <template>
     <canvas ref="canvas">
@@ -470,15 +538,119 @@ initializeGameMap(ctx);// 初始化画布
 
 说下ref(null)` 和 `ref(0)分别什么时候使用。`ref()` 是 Vue 3 中创建响应式变量的方法。`ref(0)` 表示一个初始值为 `0` 的响应式变量，适用于数字类型`ref(null)` 表示一个初始值为 `null` 的响应式变量，适用于需要绑定 DOM 元素或对象的情况。
 
-说下onMounted(() => { });这个钩子，如果 `ref` 绑定的是 DOM 元素，那么你需要等到组件挂载完成后，才能操作这些 DOM 元素。说白了就是如果要挂载DOM元素，就要写onMounted()，要不值为null，没有挂载，无法操作。
+解析一个例子
 
-7.讨论这里rows（行数）和cols（列数），与（canvas）的x和y的关系
+```vue
+GameMap.vue
+
+<template>
+<!--
+这里面的两个ref分别绑定不同的东西 
+<div> 就像是一个白板挂在墙上,
+<canvas> 就是你往这个白板上贴的一张纸，
+你用 JavaScript 拿着“画笔（canvas.getContext('2d')）”在纸上画图，
+而画纸的大小，往往是根据白板（div）的大小来设置的。
+-->
+
+  <div ref="parent" class="gamemap">是容器，确定尺寸
+    <canvas ref="canvas"></canvas>是真正的绘图区域，画图是在它上面画，不是在 div 上画的。
+  </div>
+</template>
+
+<script>
+import { GameMap } from "@/assets/scripts/GameMap.js";
+import { ref, onMounted } from "vue";
+
+export default {
+  setup() {
+    const parent = ref(null);
+    const canvas = ref(null);
+
+    onMounted(() => {
+      const ctx = canvas.value.getContext("2d");
+      // 这块就是进入GameMap.js文件了，这里传了两个参数，方便在里面统一控制尺寸和绘图。
+      // 第一个参数，canvas.value.getContext('2d') 是画笔
+      // 第二个参数，parent.value 是画布外的画框大小
+      const gameMap = new GameMap(ctx, parent.value);
+    });
+
+    return {
+      parent,
+      canvas,
+    };
+  },
+};
+</script>
+
+<style scoped>
+.gamemap {
+  width: 60vw;
+  height: 70vh;
+  border: 1px solid black;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+}
+</style>
+```
+
+```javascript
+GameMap.js
+
+import { AcGameObject } from "./AcGameObject.js";
+
+export class GameMap extends AcGameObject {
+  //这个构造函数接收两个参数
+  constructor(ctx, parent) {
+    super();
+    this.ctx = ctx;
+    this.parent = parent;
+
+    this.width = this.parent.clientWidth;
+    this.height = this.parent.clientHeight;
+	// 通过 ctx 拿到它所绑定的 canvas DOM 元素。
+    //ctx.canvas 是一个属性，返回的是 canvas 标签。
+    //你可以把这一步当成“反查回 canvas 元素”。
+    this.canvas = this.ctx.canvas;
+
+    // 设置 canvas 宽高以匹配 div 容器
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+
+    this.start();
+  }
+
+  start() {
+    this.render();
+  }
+
+  render() {
+    // 在 canvas 中绘制一个蓝色矩形，大小就是容器大小
+    // this.ctx.fillStyle = "skyblue";设置当前画笔的填充颜色。
+    this.ctx.fillStyle = "blue";
+    // 用刚才设置的填充颜色，在 canvas 上画一个矩形。
+    this.ctx.fillRect(0, 0, this.width, this.height);
+  }
+}
+```
+
+ctx有很多函数，下面就是比较常用的：
+
+| 语句                             | 意义     | 类比                 |
+| -------------------------------- | -------- | -------------------- |
+| `this.ctx = ctx`                 | 拿到画笔 | 拿到一支笔           |
+| `this.canvas = this.ctx.canvas`  | 拿到画布 | 找到这支笔对应的纸张 |
+| `this.ctx.fillStyle = "skyblue"` | 设置颜色 | 把笔装上天蓝色墨水   |
+| `this.ctx.fillRect(...)`         | 画图     | 用笔画一个矩形背景   |
+
+# 7.讨论这里rows（行数）和cols（列数），与（canvas）的x和y的关系
 
 ![2](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\2.png)
 
 所以此时在Cell.js文件中，有 this.x = c + 0.5; // 中心点的 x 坐标（列号 + 0.5）和 this.y = r + 0.5;// 中心点的 y 坐标（行号 + 0.5），x对应的是c列数，y对应的是r行数。
 
-8.vuex的使用
+# 8.vuex的使用
 
 `useStore()` 是 Vuex 提供的**组合式 API 入口**，用于获取全局的 `store` 实例。所以我们写import { useStore } from 'vuex'和const store = useStore()这两行组合代码，就可以读取state中的数据。
 
@@ -641,7 +813,7 @@ store.state.game.status
 
 模块中的结构和主 store 是一样的，也是有 `state`、`mutations`、`actions`。
 
-9.vue中的生命周期
+# 9.vue中的生命周期
 
 Vue 组件从创建 ➡️ 渲染 ➡️ 更新 ➡️ 销毁，会经历一系列“生命周期阶段”。Vue 提供了生命周期函数（钩子），让你可以**在合适的时机写逻辑代码**。在 Vue 3 的组合式 API 中，`onMounted` 和 `onUnmounted` 等等这些生命周期函数都**写在 `setup()` 里或 `<script setup>` 语法糖中**。有的setup()函数中，没有`onMounted`、`onUnmounted` 的 `<script setup>` 其实是因为**不是每个组件都需要用到生命周期钩子**。
 
@@ -711,7 +883,7 @@ greetTom();   // Hello, Tom!
 greetJerry(); // Hello, Jerry!
 ```
 
-10.vue框架顺序的一个梳理
+# 10.vue框架顺序的一个梳理
 
 ![9](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\9.png)
 
@@ -733,7 +905,7 @@ greetJerry(); // Hello, Jerry!
 - 那么 Vue 就会建立起这些数据的“依赖追踪链”；
 - 只要依赖的数据变了，对应的视图就更新，无需重新运行 `setup()`。
 
-11.前端和后端交互的url是怎么对应的？
+#11.前端和后端交互的url是怎么对应的？
 
 ### 前端发送 AJAX 时，后端是**怎么知道**对应哪个代码来处理请求的？
 
@@ -744,7 +916,7 @@ Spring Boot会在**项目启动时扫描所有带有注解（如 @PostMapping）
 1. 把每个 URL 和它对应的 Java 方法保存到一个**映射表**（叫做“路由映射表”）。
 2. 当前端发起 AJAX 请求时，框架就根据请求的 URL 和请求方法（GET/POST 等）**查找对应的处理函数**，然后调用它。
 
-12.前后端交互的一个总结
+# 12.前后端交互的一个总结
 
 整个系统的通信分两个阶段：
 
@@ -772,14 +944,100 @@ Spring Boot会在**项目启动时扫描所有带有注解（如 @PostMapping）
 
 注意前端发消息的 `socket.send()` 是从代码中template中的PlayGround.vue模块中的GameMap.vue中的GameMap.js文件中有了send函数。
 
-13.GmaeMap.vue和GameMap.js的区别
+# 13.GmaeMap.vue和GameMap.js和PlayGround.vue的区别
 
-**`GameMap.vue` 是 UI 组件，负责页面结构和渲染**，
-**`GameMap.js` 是逻辑类，封装地图的运行逻辑、控制地图、蛇、游戏规则等**。
+其实不写GameMap.js也可以，直接把GameMap.js中的逻辑全写到GmaeMap.vue的<script></script>里面也行，但是这样子太乱了。所以我们把游戏逻辑和 Vue UI 分离开来，做到**“前端视图”**和**“游戏逻辑”**的职责分离。**这是一种前后端分层的思想：UI 层 和 数据逻辑层分离！**
+
+| Vue 文件中做的事             | JS 文件中做的事                              |
+| ---------------------------- | -------------------------------------------- |
+| 负责 DOM、布局、UI、组件管理 | 负责游戏逻辑、坐标计算、物体移动、碰撞检测等 |
+
+总的来说：
+
+`GameMap.vue` 是 UI 组件，负责页面结构和渲染，
+`GameMap.js` 是逻辑类，封装地图的运行逻辑、控制地图、蛇、游戏规则等。
 
 ![11](C:\Users\30816\OneDrive\桌面\Springoot项目笔记\image\11.png)
 
-14.user.js和pk.js的区别
+因为GameMap.js是继承那个基类AcGameObject.js的，GameMap.js` 可以给多个 `.vue 页面用
+
+```javascript
+GameMap.vue       // UI层：负责渲染 canvas 标签、布局
+  ↳ 引用
+    GameMap.js    // 逻辑层：负责处理地图坐标、渲染动画、控制物体行为
+      ↳ 继承
+        AcGameObject.js // 通用的生命周期框架：start(), update(), destroy()
+```
+
+再来看GmaeMap.vue和PlayGround.vue的关系，这是个很经典、合理的结构设计问题，涉及 **Vue 组件拆分** 与 **职责分离** 的思想。
+
+**问题：为什么有了 `PlayGround.vue`，还要写一个 `GameMap.vue` 呢？是不是多此一举？**
+
+**答案：不是多此一举，而是职责划分更清晰、扩展性更强。**
+
+## ✅ 来看这两个组件到底各自负责什么：
+
+### 🔷 `PlayGround.vue`
+
+```vue
+<template>
+  <div class="playground">
+    <GameMap />
+  </div>
+</template>
+```
+
+- 它是一个**容器型组件**
+- 未来可能放：
+  - `GameMap`（地图）
+  - `ScoreBoard`（记分板）
+  - `TimerBar`（倒计时）
+  - `ControlPanel`（操作按钮）
+
+✅ 换句话说，**它的职责是组织多个子组件的布局**，而不是具体干某一件事。
+
+### 🔷 `GameMap.vue`
+
+```vue
+<template>
+  <div class="gamemap">
+    <canvas ref="canvas"></canvas>
+  </div>
+</template>
+```
+
+- 它是一个**功能型组件**
+- 它的职责是渲染 canvas 地图，控制游戏画面
+- 内部会使用 `GameObject.js` 等脚本逻辑
+
+✅ 也就是说，**它只关心“画地图”这一件事**，不关心布局或别的 UI。
+
+
+
+## ✅ 为什么要这么拆？
+
+1. **职责分离**：每个组件只关心自己的部分，**便于维护**
+
+2. **易于复用**：`GameMap.vue` 可以被别的地方复用
+
+3. **组件更清爽**：每个 `.vue` 文件变得更短、更专注
+
+4. **方便多人协作开发**：你写 PlayGround，别人写 GameMap，互不干扰
+
+   
+
+## ✅ 未来可能的结构
+
+```bash
+components/
+├── PlayGround.vue      # ✅ 容器组件，放地图、计分板、控制器等
+│   ├── GameMap.vue     # 地图画布（canvas）
+│   ├── ScoreBoard.vue  # 分数显示
+│   ├── Timer.vue       # 倒计时
+│   └── ControlPanel.vue# 操作按钮、开始、暂停等
+```
+
+# 14.user.js和pk.js的区别
 
 两个里面都有id属性，其中：
 
