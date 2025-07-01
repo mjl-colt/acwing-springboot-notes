@@ -416,7 +416,7 @@ function step(timestamp) {
 
 export default里面写components:{}和steup(){}的用处不相同。components: {}用法即先用import把其他的vue文件导入进来，然后在components: {}进行注册导出，才能在这个vue模块的template中使用。官方表达即为：注册后，子组件才能在当前组件中使用。**`components: {}`** 是告诉 Vue：**“我这个组件需要用到哪些子组件”**。
 
-```javascript
+```vue
 // ParentComponent.vue
 <script>
 import ChildComponent from './ChildComponent.vue';
@@ -437,7 +437,7 @@ export default {
 
 我们再讨论一下setup函数的使用，它的作用与 `components: {}` 的作用完全不同，并不是导入别的vue。`setup` 是用来：1.定义响应式数据（例如使用 `ref` 和 `reactive`）。2.定义方法、计算属性、生命周期钩子等。3.返回需要暴露给模板的变量和方法。`setup` 返回的内容（如 `count` 和 `increment`）会自动暴露给模板（`template`）。它负责当前组件的逻辑处理，而不是注册子组件。**`setup`** 是告诉 Vue：**“我这个组件需要什么逻辑和数据”**。
 
-```javascript
+```vue
 <script>
 export default {
   setup() {
@@ -650,6 +650,17 @@ ctx有很多函数，下面就是比较常用的：
 
 所以此时在Cell.js文件中，有 this.x = c + 0.5; // 中心点的 x 坐标（列号 + 0.5）和 this.y = r + 0.5;// 中心点的 y 坐标（行号 + 0.5），x对应的是c列数，y对应的是r行数。
 
+上面的坐标的一个不同，主要是用于下面这个函数中，函数的每个参数如下展示：
+
+## ✅ `fillRect(x, y, width, height)` 的参数含义如下：
+
+| 参数     | 说明                                            |
+| -------- | ----------------------------------------------- |
+| `x`      | 矩形左上角的 **x 坐标**（相对于 canvas 左上角） |
+| `y`      | 矩形左上角的 **y 坐标**（相对于 canvas 左上角） |
+| `width`  | 矩形的 **宽度**（向右延伸的距离）               |
+| `height` | 矩形的 **高度**（向下延伸的距离）               |
+
 # 8.vuex的使用
 
 `useStore()` 是 Vuex 提供的**组合式 API 入口**，用于获取全局的 `store` 实例。所以我们写import { useStore } from 'vuex'和const store = useStore()这两行组合代码，就可以读取state中的数据。
@@ -819,7 +830,59 @@ Vue 组件从创建 ➡️ 渲染 ➡️ 更新 ➡️ 销毁，会经历一系�
 
 简单来说，**“打开当前页面”** → 就会触发当前页面组件的挂载 → 执行 `onMounted()` 里的代码。 **你离开页面/路由切换了**：`onUnmounted()` 被执行。
 
-10.匿名函数，js一些基础
+我们只需要关注onMounted()和onUnmounted()两个钩子函数即可
+
+### 🔹 只要这个组件（GameMap.vue）被挂载到页面上，`onMounted()` 就会被自动调用！
+
+------
+
+## 📌 什么叫 “挂载”？
+
+“挂载”就是：Vue 把这个组件渲染出来，放到页面里。比如：
+
+```html
+<!-- 页面结构 -->
+<template>
+  <GameMap />   <!-- ⬅️ 当这一行执行，组件就“挂载”了 -->
+</template>
+```
+
+## ✅ `onMounted()` 的作用
+
+Vue 的生命周期钩子之一，用于**在 DOM 元素都创建完成之后执行初始化逻辑**。
+
+```javascript
+import { onMounted } from 'vue'
+
+onMounted(() => {
+  // 这里写的代码会在模板中的 DOM 元素都准备好之后再执行
+})
+```
+
+流程如下：
+
+1. Vue 渲染页面，把 `<canvas>` 和 `<div>` 插入 DOM
+2. Vue 调用 `onMounted()` 回调
+3. `canvas.value` 和 `parent.value` 都能访问到真实 DOM
+4. 用 canvas 拿到绘图上下文 ctx（画笔）
+5. 创建 `GameMap` 类实例，开始绘图！
+
+如果不写onMounted()就直接调用new GameMap(canvas.value.getContext('2d'), parent.value);，那么此时Vue **还没把 `<template>` 里的 DOM 节点渲染出来，`canvas.value` 和 `parent.value` 都是 `null`！**正确写法是用 `onMounted` 等待 DOM 渲染完成，再继续进行onMounted()里面的内容。
+
+Vue 的组件渲染是**异步的**，它先执行 `setup()`，再去渲染 DOM。所以你在 `setup()` 里同步访问 DOM，基本都会是 `null`。
+
+而 `onMounted()` 是 Vue 提供的生命周期钩子，它专门用来执行**“DOM 渲染完成后”的逻辑**，是画图、操作 DOM、注册事件的首选位置。
+
+## ✅ `onUnmounted()` 的作用
+
+`onUnmounted()` 是为了在组件销毁前**清理副作用**，防止内存泄漏、逻辑冲突和奇怪的 bug。例如，1.定时器 页面切换了还在执行 → 多个定时器重叠，浪费性能。 
+`onUnmounted()` 是 Vue 提供的“清理工”，只要你在组件中创建了**定时器、监听器、图形、外部资源**等非响应式内容，**都应该用它来清除！**
+
+**什么时候清理副作用？** —— 当你**知道这个组件会“离开视图”、“不再使用”时**，就必须清理掉它创建的副作用。
+
+最稳妥的方式：**你只要在 `onMounted()` 里“绑定/创建了某些功能”，就在 `onUnmounted()` 里“解绑/销毁它”。**
+
+# 10.匿名函数，js一些基础
 
 首先看一下基础变换，包括有参和无参的。
 
